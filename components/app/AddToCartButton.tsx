@@ -3,7 +3,11 @@
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useCartActions, useCartItem } from "@/lib/store/cart-store-provider";
+import {
+  useAddItem,
+  useUpdateQuantity,
+  useCartItems,
+} from "@/lib/store/cart-store-provider";
 import { cn } from "@/lib/utils";
 
 interface AddToCartButtonProps {
@@ -23,25 +27,28 @@ export function AddToCartButton({
   stock,
   className,
 }: AddToCartButtonProps) {
-  const { addItem, updateQuantity } = useCartActions();
-  const cartItem = useCartItem(productId);
+  const addItem = useAddItem();
+  const updateQuantity = useUpdateQuantity();
+  const cartItems = useCartItems();
 
-  const quantityInCart = cartItem?.quantity ?? 0;
+  const cartItem = cartItems.find(
+    (i) => i.productId === productId
+  );
+
+  const quantity = cartItem?.quantity ?? 0;
   const isOutOfStock = stock <= 0;
-  const isAtMax = quantityInCart >= stock;
+  const isMaxReached = quantity >= stock;
 
-  const handleAdd = () => {
-    if (quantityInCart < stock) {
+  function handleAdd() {
+    if (quantity < stock) {
       addItem({ productId, name, price, image }, 1);
-      toast.success(`Added ${name}`);
+      toast.success(`${name} added to cart`);
     }
-  };
+  }
 
-  const handleDecrement = () => {
-    if (quantityInCart > 0) {
-      updateQuantity(productId, quantityInCart - 1);
-    }
-  };
+  function handleRemove() {
+    updateQuantity(productId, quantity - 1);
+  }
 
   // Out of stock
   if (isOutOfStock) {
@@ -51,46 +58,49 @@ export function AddToCartButton({
         variant="secondary"
         className={cn("h-11 w-full", className)}
       >
-        Out of Stock
+        Out of stock
       </Button>
     );
   }
 
-  // Not in cart - show Add to Basket button
-  if (quantityInCart === 0) {
+  // Not yet in cart
+  if (quantity === 0) {
     return (
-      <Button onClick={handleAdd} className={cn("h-11 w-full", className)}>
+      <Button
+        onClick={handleAdd}
+        className={cn("h-11 w-full", className)}
+      >
         <ShoppingBag className="mr-2 h-4 w-4" />
-        Add to Basket
+        Add to cart
       </Button>
     );
   }
 
-  // In cart - show quantity controls
+  // Already in cart
   return (
     <div
       className={cn(
-        "flex h-11 w-full items-center rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900",
-        className,
+        "flex h-11 w-full items-center rounded-md border",
+        className
       )}
     >
       <Button
         variant="ghost"
         size="icon"
-        className="h-full flex-1 rounded-r-none"
-        onClick={handleDecrement}
+        onClick={handleRemove}
       >
         <Minus className="h-4 w-4" />
       </Button>
-      <span className="flex-1 text-center text-sm font-semibold tabular-nums">
-        {quantityInCart}
+
+      <span className="flex-1 text-center font-semibold">
+        {quantity}
       </span>
+
       <Button
         variant="ghost"
         size="icon"
-        className="h-full flex-1 rounded-l-none disabled:opacity-20"
         onClick={handleAdd}
-        disabled={isAtMax}
+        disabled={isMaxReached}
       >
         <Plus className="h-4 w-4" />
       </Button>

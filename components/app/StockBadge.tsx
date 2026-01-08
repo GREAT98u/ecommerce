@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { useCartItem } from "@/lib/store/cart-store-provider";
+import { useCartItems } from "@/lib/store/cart-store-provider";
 import { cn } from "@/lib/utils";
 import { isLowStock as checkLowStock } from "@/lib/constants/stock";
 
@@ -11,8 +11,16 @@ interface StockBadgeProps {
   className?: string;
 }
 
-export function StockBadge({ productId, stock, className }: StockBadgeProps) {
-  const cartItem = useCartItem(productId);
+export function StockBadge({
+  productId,
+  stock,
+  className,
+}: StockBadgeProps) {
+  const cartItems = useCartItems();
+
+  const cartItem = cartItems.find(
+    (item) => item.productId === productId
+  );
 
   const quantityInCart = cartItem?.quantity ?? 0;
   const isAtMax = quantityInCart >= stock && stock > 0;

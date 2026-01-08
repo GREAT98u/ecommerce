@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCartActions } from "@/lib/store/cart-store-provider";
+import { useRemoveItem } from "@/lib/store/cart-store-provider";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { cn, formatPrice } from "@/lib/utils";
@@ -17,7 +17,7 @@ interface CartItemProps {
 }
 
 export function CartItem({ item, stockInfo }: CartItemProps) {
-  const { removeItem } = useCartActions();
+  const removeItem = useRemoveItem();
 
   const isOutOfStock = stockInfo?.isOutOfStock ?? false;
   const exceedsStock = stockInfo?.exceedsStock ?? false;
@@ -65,6 +65,7 @@ export function CartItem({ item, stockInfo }: CartItemProps) {
           >
             {item.name}
           </Link>
+
           <Button
             variant="ghost"
             size="icon"
@@ -81,10 +82,14 @@ export function CartItem({ item, stockInfo }: CartItemProps) {
         </p>
 
         {/* Stock Badge & Quantity Controls */}
-        <div className="mt-2 flex flex-row justify-between items-center gap-2">
-          <StockBadge productId={item.productId} stock={currentStock} />
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <StockBadge
+            productId={item.productId}
+            stock={currentStock}
+          />
+
           {!isOutOfStock && (
-            <div className="w-32 flex self-end ml-auto">
+            <div className="ml-auto w-32">
               <AddToCartButton
                 productId={item.productId}
                 name={item.name}

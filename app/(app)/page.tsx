@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { sanityFetch } from "@/sanity/lib/live";
+
 import {
   FEATURED_PRODUCTS_QUERY,
   FILTER_PRODUCTS_BY_NAME_QUERY,
@@ -7,11 +8,13 @@ import {
   FILTER_PRODUCTS_BY_PRICE_DESC_QUERY,
   FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
 } from "@/lib/sanity/queries/products";
+
 import { ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-import { ProductSection } from "@/components/app/ProductSection";
+
 import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
 import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
+import { ProductsClientWrapper } from "@/components/app/ProductsClientWrapper";
 
 interface PageProps {
   searchParams: Promise<{
@@ -38,9 +41,10 @@ export default async function HomePage({ searchParams }: PageProps) {
   const sort = params.sort ?? "name";
   const inStock = params.inStock === "true";
 
-  // Select query based on sort parameter
+  /* -------------------------------
+     Select GROQ query by sort type
+  -------------------------------- */
   const getQuery = () => {
-    // If searching and sort is relevance, use relevance query
     if (searchQuery && sort === "relevance") {
       return FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
     }
@@ -57,8 +61,10 @@ export default async function HomePage({ searchParams }: PageProps) {
     }
   };
 
-  // Fetch products with filters (server-side via GROQ)
-  const { data: products } = await sanityFetch({
+  /* -------------------------------
+     Fetch Sanity products (SERVER)
+  -------------------------------- */
+  const { data: sanityProducts } = await sanityFetch({
     query: getQuery(),
     params: {
       searchQuery,
@@ -71,12 +77,16 @@ export default async function HomePage({ searchParams }: PageProps) {
     },
   });
 
-  // Fetch categories for filter sidebar
+  /* -------------------------------
+     Fetch categories (SERVER)
+  -------------------------------- */
   const { data: categories } = await sanityFetch({
     query: ALL_CATEGORIES_QUERY,
   });
 
-  // Fetch featured products for carousel
+  /* -------------------------------
+     Fetch featured products (SERVER)
+  -------------------------------- */
   const { data: featuredProducts } = await sanityFetch({
     query: FEATURED_PRODUCTS_QUERY,
   });
@@ -101,7 +111,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        {/* Category Tiles - Full width */}
+        {/* Category Tiles */}
         <div className="mt-6">
           <CategoryTiles
             categories={categories}
@@ -110,10 +120,11 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      {/* Products Section */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <ProductSection
+        <ProductsClientWrapper
           categories={categories}
-          products={products}
+          sanityProducts={sanityProducts}
           searchQuery={searchQuery}
         />
       </div>

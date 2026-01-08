@@ -1,134 +1,76 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useRef,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { useStore } from "zustand";
-import {
-  createCartStore,
-  type CartStore,
-  type CartState,
-  defaultInitState,
-} from "./cart-store";
+import { createCartStore, CartStore } from "./cart-store";
+import { useCartQuery } from "@/lib/queries/useCartQuery";
+import { useAuthStore } from "@/lib/store/auth-store";
 
-// Store API type
-export type CartStoreApi = ReturnType<typeof createCartStore>;
+type CartStoreApi = ReturnType<typeof createCartStore>;
 
-// Context
-const CartStoreContext = createContext<CartStoreApi | undefined>(undefined);
+const CartStoreContext = createContext<CartStoreApi | null>(null);
 
-// Provider props
-interface CartStoreProviderProps {
-  children: ReactNode;
-  initialState?: CartState;
-}
-
-/**
- * Cart store provider - creates one store instance per provider
- * Manually triggers rehydration from localStorage on the client
- * Wrap your app/(app) layout with this provider
- * @see https://zustand.docs.pmnd.rs/guides/nextjs#hydration-and-asynchronous-storages
- */
-export const CartStoreProvider = ({
+export function CartStoreProvider({
   children,
-  initialState,
-}: CartStoreProviderProps) => {
+}: {
+  children: React.ReactNode;
+}) {
   const storeRef = useRef<CartStoreApi | null>(null);
+  const { isAuthenticated } = useAuthStore();
 
-  if (storeRef.current === null) {
-    storeRef.current = createCartStore(initialState ?? defaultInitState);
+  if (!storeRef.current) {
+    storeRef.current = createCartStore();
   }
 
-  // Manually trigger rehydration on the client after mount
-  // This prevents SSR hydration mismatches since localStorage isn't available on server
+  /* ===============================
+     Fetch cart (JWT-based)
+  =============================== */
+
+  const { data, isSuccess, isError } = useCartQuery(isAuthenticated);
+
   useEffect(() => {
-    storeRef.current?.persist.rehydrate();
-  }, []);
+    const store = storeRef.current!;
+    const state = store.getState();
+
+    // Logged out → clear cart
+    if (!isAuthenticated) {
+      if (state.items.length > 0) {
+        state.clearCart();
+      }
+      return;
+    }
+
+    // Logged in → hydrate cart
+    if (isSuccess && data?.items) {
+      store.setState({
+        items: data.items,
+      });
+    }
+  }, [isAuthenticated, isSuccess, isError, data]);
 
   return (
     <CartStoreContext.Provider value={storeRef.current}>
       {children}
     </CartStoreContext.Provider>
   );
-};
+}
 
-/**
- * Hook to access the cart store with a selector
- * Must be used within CartStoreProvider
- * Handles SSR by returning default state until hydrated
- */
-export const useCartStore = <T,>(selector: (store: CartStore) => T): T => {
-  const cartStoreContext = useContext(CartStoreContext);
+/* ===============================
+   Hooks
+================================ */
 
-  if (!cartStoreContext) {
+export function useCartStore<T>(selector: (s: CartStore) => T): T {
+  const store = useContext(CartStoreContext);
+  if (!store) {
     throw new Error("useCartStore must be used within CartStoreProvider");
   }
+  return useStore(store, selector);
+}
 
-  return useStore(cartStoreContext, selector);
-};
-
-// ============================================
-// Convenience Hooks
-// ============================================
-
-/**
- * Get all cart items
- */
-export const useCartItems = () => useCartStore((state) => state.items);
-
-/**
- * Get cart open state
- */
-export const useCartIsOpen = () => useCartStore((state) => state.isOpen);
-
-/**
- * Get total number of items in cart
- */
-export const useTotalItems = () =>
-  useCartStore((state) =>
-    state.items.reduce((sum, item) => sum + item.quantity, 0),
-  );
-
-/**
- * Get total price of cart
- */
-export const useTotalPrice = () =>
-  useCartStore((state) =>
-    state.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-  );
-
-/**
- * Find a specific item in cart
- */
-export const useCartItem = (productId: string) =>
-  useCartStore((state) =>
-    state.items.find((item) => item.productId === productId),
-  );
-
-/**
- * Get all cart actions
- * Actions are stable references from zustand, safe to destructure
- */
-export const useCartActions = () => {
-  const addItem = useCartStore((state) => state.addItem);
-  const removeItem = useCartStore((state) => state.removeItem);
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
-  const clearCart = useCartStore((state) => state.clearCart);
-  const toggleCart = useCartStore((state) => state.toggleCart);
-  const openCart = useCartStore((state) => state.openCart);
-  const closeCart = useCartStore((state) => state.closeCart);
-
-  return {
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    toggleCart,
-    openCart,
-    closeCart,
-  };
-};
+export const useCartItems = () => useCartStore((s) => s.items);
+export const useCartIsOpen = () => useCartStore((s) => s.isOpen);
+export const useAddItem = () => useCartStore((s) => s.addItem);
+export const useRemoveItem = () => useCartStore((s) => s.removeItem);
+export const useUpdateQuantity = () => useCartStore((s) => s.updateQuantity);
+export const useClearCart = () => useCartStore((s) => s.clearCart);
+export const useToggleCart = () => useCartStore((s) => s.toggleCart);

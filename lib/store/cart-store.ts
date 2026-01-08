@@ -1,97 +1,100 @@
 import { createStore } from "zustand/vanilla";
-import { persist } from "zustand/middleware";
 
-// Types
+/* =====================
+   Types
+===================== */
+
 export interface CartItem {
   productId: string;
   name: string;
   price: number;
   quantity: number;
-  image?: string;
+  image?: string; // UI-only
 }
 
-export interface CartState {
+export interface CartStore {
+  userId?: string;
   items: CartItem[];
   isOpen: boolean;
-}
 
-export interface CartActions {
+  // lifecycle
+  hydrateCart: (userId: string, items: CartItem[]) => void;
+  logout: () => void;
+
+  // cart actions (optimistic UI only)
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+
+  // UI
   toggleCart: () => void;
-  openCart: () => void;
-  closeCart: () => void;
 }
 
-export type CartStore = CartState & CartActions;
+/* =====================
+   Store
+===================== */
 
-// Default state
-export const defaultInitState: CartState = {
-  items: [],
-  isOpen: false,
-};
+export const createCartStore = () =>
+  createStore<CartStore>((set) => ({
+    userId: undefined,
+    items: [],
+    isOpen: false,
 
-/**
- * Cart store factory - creates new store instance per provider
- * Uses persist middleware with skipHydration for Next.js SSR compatibility
- * @see https://zustand.docs.pmnd.rs/guides/nextjs#hydration-and-asynchronous-storages
- */
-export const createCartStore = (initState: CartState = defaultInitState) => {
-  return createStore<CartStore>()(
-    persist(
-      (set) => ({
-        ...initState,
+    /* ---------- lifecycle ---------- */
 
-        addItem: (item, quantity = 1) =>
-          set((state) => {
-            const existing = state.items.find(
-              (i) => i.productId === item.productId
-            );
-            if (existing) {
-              return {
-                items: state.items.map((i) =>
-                  i.productId === item.productId
-                    ? { ...i, quantity: i.quantity + quantity }
-                    : i
-                ),
-              };
-            }
-            return { items: [...state.items, { ...item, quantity }] };
-          }),
+    hydrateCart: (userId, items) => {
+      set({
+        userId,
+        items,
+      });
+    },
 
-        removeItem: (productId) =>
-          set((state) => ({
-            items: state.items.filter((i) => i.productId !== productId),
-          })),
+    logout: () => {
+      set({
+        userId: undefined,
+        items: [],
+        isOpen: false,
+      });
+    },
 
-        updateQuantity: (productId, quantity) =>
-          set((state) => {
-            if (quantity <= 0) {
-              return {
-                items: state.items.filter((i) => i.productId !== productId),
-              };
-            }
-            return {
-              items: state.items.map((i) =>
+    /* ---------- cart actions (optimistic) ---------- */
+
+    addItem: (item, quantity = 1) =>
+      set((state) => {
+        const existing = state.items.find(
+          (i) => i.productId === item.productId
+        );
+
+        const items = existing
+          ? state.items.map((i) =>
+              i.productId === item.productId
+                ? { ...i, quantity: i.quantity + quantity }
+                : i
+            )
+          : [...state.items, { ...item, quantity }];
+
+        return { items };
+      }),
+
+    removeItem: (productId) =>
+      set((state) => ({
+        items: state.items.filter((i) => i.productId !== productId),
+      })),
+
+    updateQuantity: (productId, quantity) =>
+      set((state) => ({
+        items:
+          quantity <= 0
+            ? state.items.filter((i) => i.productId !== productId)
+            : state.items.map((i) =>
                 i.productId === productId ? { ...i, quantity } : i
               ),
-            };
-          }),
+      })),
 
-        clearCart: () => set({ items: [] }),
-        toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
-        openCart: () => set({ isOpen: true }),
-        closeCart: () => set({ isOpen: false }),
-      }),
-      {
-        name: "cart-storage",
-        // Skip automatic hydration - we'll trigger it manually on the client
-        skipHydration: true,
-        // Only persist items, not UI state like isOpen
-        partialize: (state) => ({ items: state.items }),
-      }
-    )
-  );
-};
+    clearCart: () => set({ items: [] }),
+
+    /* ---------- UI ---------- */
+
+    toggleCart: () => set((s) => ({ isOpen: !s.isOpen })),
+  }));
