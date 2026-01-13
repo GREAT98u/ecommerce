@@ -19,15 +19,16 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
 
-    // Unauthorized → session expired or not logged in
-    if (status === 401) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("auth:logout"));
-      }
+    // ONLY logout if user was already authenticated
+    if (status === 401 && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("auth:unauthorized")
+      );
     }
 
     return Promise.reject(error);
   }
 );
+
 
 export default api;

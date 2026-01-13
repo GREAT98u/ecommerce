@@ -1,12 +1,12 @@
 import { defineQuery } from "next-sanity";
 
 /**
- * Get orders by Clerk user ID
+ * Get orders by backend user ID (UUID)
  * Used on orders list page
  */
 export const ORDERS_BY_USER_QUERY = defineQuery(`*[
   _type == "order"
-  && clerkUserId == $clerkUserId
+  && userId == $userId
 ] | order(createdAt desc) {
   _id,
   orderNumber,
@@ -28,7 +28,7 @@ export const ORDER_BY_ID_QUERY = defineQuery(`*[
 ][0] {
   _id,
   orderNumber,
-  clerkUserId,
+  userId,
   email,
   items[]{
     _key,
@@ -62,6 +62,7 @@ export const ORDER_BY_ID_QUERY = defineQuery(`*[
 
 /**
  * Get recent orders (for admin dashboard)
+ * Auth handled separately (role-based)
  */
 export const RECENT_ORDERS_QUERY = defineQuery(`*[
   _type == "order"
@@ -82,4 +83,3 @@ export const ORDER_BY_STRIPE_PAYMENT_ID_QUERY = defineQuery(`*[
   _type == "order"
   && stripePaymentId == $stripePaymentId
 ][0]{ _id }`);
-

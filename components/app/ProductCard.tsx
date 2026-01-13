@@ -20,7 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(
     null,
   );
-
+  const backendProductId = (product as any).backendId;
   const images = product.images ?? [];
   const mainImageUrl = images[0]?.asset?.url;
   const displayedImageUrl =
@@ -131,12 +131,13 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <CardFooter className="mt-auto p-5 pt-0">
         <AddToCartButton
-          productId={product._id}
-          name={product.name ?? "Unknown Product"}
-          price={product.price ?? 0}
-          image={mainImageUrl ?? undefined}
-          stock={stock}
-        />
+  productId={backendProductId}
+  name={product.name ?? "Unknown Product"}
+  price={product.price ?? 0}
+  image={mainImageUrl ?? undefined}
+  stock={stock}
+  disabled={!backendProductId}
+/>
       </CardFooter>
     </Card>
   );

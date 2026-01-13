@@ -12,6 +12,7 @@ export function mapBackendProduct(product: any) {
   return {
     // Unique ID to avoid collision with Sanity _id
     _id: `backend-${product?.id ?? crypto.randomUUID()}`,
+    backendId: product.id,
 
     name,
 

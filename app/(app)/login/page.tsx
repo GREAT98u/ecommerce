@@ -15,7 +15,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, authInitialized } = useAuthStore();
 
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
@@ -32,11 +32,13 @@ export default function AuthPage() {
   });
 
   // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/");
-    }
-  }, [isAuthenticated, router]);
+useEffect(() => {
+  if (!authInitialized) return;
+
+  if (isAuthenticated) {
+    router.replace("/");
+  }
+}, [isAuthenticated, authInitialized, router]);
 
 const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();

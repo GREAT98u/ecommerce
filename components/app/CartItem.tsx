@@ -70,7 +70,14 @@ export function CartItem({ item, stockInfo }: CartItemProps) {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-zinc-400 hover:text-red-500"
-            onClick={() => removeItem(item.productId)}
+            onClick={async () => {
+              try {
+                await removeItem(item.productId);
+              } catch {
+                // optional toast
+              }
+            }}
+
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Remove {item.name}</span>

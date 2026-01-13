@@ -14,23 +14,34 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  setUser: (user: AuthUser | null) => void;
+  authInitialized: boolean;
+
+  setUser: (user: AuthUser) => void;
   clearAuth: () => void;
+  markInitialized: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  authInitialized: false,
 
   setUser: (user) =>
     set({
       user,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: true,
+      authInitialized: true,
     }),
 
   clearAuth: () =>
     set({
       user: null,
       isAuthenticated: false,
+      authInitialized: true,
+    }),
+
+  markInitialized: () =>
+    set({
+      authInitialized: true,
     }),
 }));

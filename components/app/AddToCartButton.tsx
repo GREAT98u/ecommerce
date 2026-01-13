@@ -11,12 +11,13 @@ import {
 import { cn } from "@/lib/utils";
 
 interface AddToCartButtonProps {
-  productId: string;
+  productId?: string; // ✅ optional (Sanity-safe)
   name: string;
   price: number;
   image?: string;
   stock: number;
   className?: string;
+  disabled?: boolean; // ✅ FIXED
 }
 
 export function AddToCartButton({
@@ -26,6 +27,7 @@ export function AddToCartButton({
   image,
   stock,
   className,
+  disabled = false,
 }: AddToCartButtonProps) {
   const addItem = useAddItem();
   const updateQuantity = useUpdateQuantity();
@@ -39,18 +41,36 @@ export function AddToCartButton({
   const isOutOfStock = stock <= 0;
   const isMaxReached = quantity >= stock;
 
-  function handleAdd() {
-    if (quantity < stock) {
-      addItem({ productId, name, price, image }, 1);
+  const isDisabled =
+    disabled || !productId || isOutOfStock;
+
+  async function handleAdd() {
+    if (!productId) {
+      toast.error("This product cannot be added to cart");
+      return;
+    }
+
+    if (quantity >= stock) return;
+
+    try {
+      await addItem({ productId, name, price, image }, 1);
       toast.success(`${name} added to cart`);
+    } catch (error) {
+      toast.error("Failed to add item to cart");
     }
   }
 
-  function handleRemove() {
-    updateQuantity(productId, quantity - 1);
+  async function handleRemove() {
+    if (!productId) return;
+
+    try {
+      await updateQuantity(productId, quantity - 1);
+    } catch {
+      toast.error("Unable to update cart");
+    }
   }
 
-  // Out of stock
+  // 🚫 Out of stock
   if (isOutOfStock) {
     return (
       <Button
@@ -63,11 +83,12 @@ export function AddToCartButton({
     );
   }
 
-  // Not yet in cart
+  // ➕ Not yet in cart
   if (quantity === 0) {
     return (
       <Button
         onClick={handleAdd}
+        disabled={isDisabled}
         className={cn("h-11 w-full", className)}
       >
         <ShoppingBag className="mr-2 h-4 w-4" />
@@ -76,7 +97,7 @@ export function AddToCartButton({
     );
   }
 
-  // Already in cart
+  // 🔁 Already in cart
   return (
     <div
       className={cn(
@@ -88,6 +109,7 @@ export function AddToCartButton({
         variant="ghost"
         size="icon"
         onClick={handleRemove}
+        disabled={disabled}
       >
         <Minus className="h-4 w-4" />
       </Button>
@@ -100,7 +122,7 @@ export function AddToCartButton({
         variant="ghost"
         size="icon"
         onClick={handleAdd}
-        disabled={isMaxReached}
+        disabled={isMaxReached || disabled}
       >
         <Plus className="h-4 w-4" />
       </Button>

@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import api from "@/lib/api/axios";
 
 /* =====================
    Types
@@ -13,21 +14,20 @@ export interface CartItem {
 }
 
 export interface CartStore {
-  userId?: string;
   items: CartItem[];
   isOpen: boolean;
 
-  // lifecycle
-  hydrateCart: (userId: string, items: CartItem[]) => void;
-  logout: () => void;
+  /* ---------- cart actions (BACKEND-SOURCED) ---------- */
+  addItem: (
+    item: Omit<CartItem, "quantity">,
+    quantity?: number
+  ) => Promise<void>;
 
-  // cart actions (optimistic UI only)
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  removeItem: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 
-  // UI
+  /* ---------- UI ---------- */
   toggleCart: () => void;
 }
 
@@ -37,64 +37,74 @@ export interface CartStore {
 
 export const createCartStore = () =>
   createStore<CartStore>((set) => ({
-    userId: undefined,
     items: [],
     isOpen: false,
 
-    /* ---------- lifecycle ---------- */
+    /* ---------- cart actions ---------- */
 
-    hydrateCart: (userId, items) => {
-      set({
-        userId,
-        items,
+    addItem: async (item, quantity = 1) => {
+      // 1️⃣ Write to backend (authoritative)
+      await api.post("/cart/items", {
+        item,
+        quantity,
       });
-    },
 
-    logout: () => {
-      set({
-        userId: undefined,
-        items: [],
-        isOpen: false,
-      });
-    },
-
-    /* ---------- cart actions (optimistic) ---------- */
-
-    addItem: (item, quantity = 1) =>
+      // 2️⃣ Optimistically update Zustand (NO refetch)
       set((state) => {
         const existing = state.items.find(
           (i) => i.productId === item.productId
         );
 
-        const items = existing
-          ? state.items.map((i) =>
+        if (existing) {
+          return {
+            items: state.items.map((i) =>
               i.productId === item.productId
                 ? { ...i, quantity: i.quantity + quantity }
                 : i
-            )
-          : [...state.items, { ...item, quantity }];
+            ),
+          };
+        }
 
-        return { items };
-      }),
+        return {
+          items: [...state.items, { ...item, quantity }],
+        };
+      });
+    },
 
-    removeItem: (productId) =>
-      set((state) => ({
-        items: state.items.filter((i) => i.productId !== productId),
-      })),
+    updateQuantity: async (productId, quantity) => {
+      await api.patch(`/cart/items/${productId}`, { quantity });
 
-    updateQuantity: (productId, quantity) =>
       set((state) => ({
         items:
           quantity <= 0
-            ? state.items.filter((i) => i.productId !== productId)
+            ? state.items.filter(
+                (i) => i.productId !== productId
+              )
             : state.items.map((i) =>
-                i.productId === productId ? { ...i, quantity } : i
+                i.productId === productId
+                  ? { ...i, quantity }
+                  : i
               ),
-      })),
+      }));
+    },
 
-    clearCart: () => set({ items: [] }),
+    removeItem: async (productId) => {
+      await api.delete(`/cart/items/${productId}`);
+
+      set((state) => ({
+        items: state.items.filter(
+          (i) => i.productId !== productId
+        ),
+      }));
+    },
+
+    clearCart: async () => {
+      await api.delete("/cart");
+      set({ items: [] });
+    },
 
     /* ---------- UI ---------- */
 
-    toggleCart: () => set((s) => ({ isOpen: !s.isOpen })),
+    toggleCart: () =>
+      set((state) => ({ isOpen: !state.isOpen })),
   }));
