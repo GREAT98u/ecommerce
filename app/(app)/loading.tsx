@@ -1,6 +1,6 @@
 import { CategoryTilesSkeleton } from "@/components/app/CategoryTilesSkeleton";
-import { ProductFiltersSkeleton } from "@/components/app/ProductFiltersSkeleton";
-import { ProductGridSkeleton } from "@/components/app/ProductGridSkeleton";
+import { ProductFiltersSkeleton } from "@/components/app/products/ProductFiltersSkeleton";
+import { ProductGridSkeleton } from "@/components/app/products/ProductGridSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomeLoading() {

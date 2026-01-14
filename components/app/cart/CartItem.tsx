@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRemoveItem } from "@/lib/store/cart-store-provider";
-import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { AddToCartButton } from "@/components/app/cart/AddToCartButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { cn, formatPrice } from "@/lib/utils";
 import type { CartItem as CartItemType } from "@/lib/store/cart-store";

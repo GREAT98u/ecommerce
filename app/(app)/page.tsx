@@ -8,13 +8,11 @@ import {
   FILTER_PRODUCTS_BY_PRICE_DESC_QUERY,
   FILTER_PRODUCTS_BY_RELEVANCE_QUERY,
 } from "@/lib/sanity/queries/products";
-
 import { ALL_CATEGORIES_QUERY } from "@/lib/sanity/queries/categories";
-
 import { CategoryTiles } from "@/components/app/CategoryTiles";
 import { FeaturedCarousel } from "@/components/app/FeaturedCarousel";
 import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
-import { ProductsClientWrapper } from "@/components/app/ProductsClientWrapper";
+import { ProductsClientWrapper } from "@/components/app/products/ProductsClientWrapper";
 
 interface PageProps {
   searchParams: Promise<{

@@ -23,6 +23,7 @@ export function AuthSessionHandler({
     async function bootstrapAuth() {
       try {
         const { data } = await api.get("/auth/me");
+        console.log(data)
         if (mounted) setUser(data.user);
       } catch {
         if (mounted) clearAuth();

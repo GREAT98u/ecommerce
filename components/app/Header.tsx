@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   useCartItems,
   useToggleCart,
@@ -20,7 +19,8 @@ import {
   useChatActions,
   useIsChatOpen,
 } from "@/lib/store/chat-store-provider";
-
+import { AdminSidebarSheet } from "@/components/admin/AdminSidebarSheet";
+import { useState } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import api from "@/lib/api/axios";
 
@@ -31,7 +31,7 @@ export function Header() {
 
   const items = useCartItems();
   const toggleCart = useToggleCart();
-
+  const [adminOpen, setAdminOpen] = useState(false);
   const { openChat } = useChatActions();
   const isChatOpen = useIsChatOpen();
 
@@ -90,7 +90,14 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="relative"
-            onClick={toggleCart}
+            onClick={() => {
+                if (user?.role === "Admin") {
+                  setAdminOpen(true);
+                } else {
+                  toggleCart();
+                }
+              }}
+
           >
             <ShoppingBag className="h-5 w-5" />
             {totalItems > 0 && (
@@ -141,6 +148,14 @@ export function Header() {
               </Link>
             </Button>
           )}
+
+            {user?.role === "Admin" && (
+              <AdminSidebarSheet
+                open={adminOpen}
+                onOpenChange={setAdminOpen}
+              />
+            )}
+
         </div>
       </div>
     </header>

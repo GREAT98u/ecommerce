@@ -6,7 +6,8 @@ import { Header } from "@/components/app/Header";
 import { AppShell } from "@/components/app/AppShell";
 import { Providers } from "./providers";
 import { AuthSessionHandler } from "@/lib/store/AuthSessionHandler";
-import { CartSheet } from "@/components/app/CartSheet";
+import { CartSheet } from "@/components/app/cart/CartSheet";
+import { AdminSidebarSheet } from "@/components/admin/AdminSidebarSheet";
 
 
 export default async function AppLayout({
@@ -25,6 +26,7 @@ export default async function AppLayout({
                 <AuthSessionHandler>
                   <Header />
                   <CartSheet/>
+                  
                   <main>{children}</main>
                 </AuthSessionHandler>
             </AppShell>

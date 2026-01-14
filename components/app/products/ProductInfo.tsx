@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { AddToCartButton } from "@/components/app/cart/AddToCartButton";
 import { AskAISimilarButton } from "@/components/app/AskAISimilarButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { formatPrice } from "@/lib/utils";

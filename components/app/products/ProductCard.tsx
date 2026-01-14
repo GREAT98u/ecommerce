@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatPrice } from "@/lib/utils";
-import { AddToCartButton } from "@/components/app/AddToCartButton";
+import { AddToCartButton } from "@/components/app/cart/AddToCartButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import type { FILTER_PRODUCTS_BY_NAME_QUERYResult } from "@/sanity.types";
 

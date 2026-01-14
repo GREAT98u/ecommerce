@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductSection } from "@/components/app/ProductSection";
+import { ProductSection } from "@/components/app/products/ProductSection";
 import { useBackendProducts } from "@/components/providers/BackendProductsProvider";
 
 type Props = {
